@@ -1,5 +1,7 @@
 import java.security.PublicKey;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Set;
 import java.util.Vector;
 
 public class MaxFeeTxHandler {
@@ -145,42 +147,50 @@ public class MaxFeeTxHandler {
      * updating the current UTXO pool as appropriate.
      */
     public Transaction[] handleTxs(Transaction[] possibleTxs) {
-    	Vector<Transaction> acceptedTxs= new Vector<Transaction>();
+    	HashMap validTxnsAndFees= computeFeesForValidTransactionsFrom(possibleTxs);
+    	Set<Transaction> txns= validTxnsAndFees.keySet();
+    	Transaction[] validTxns= txns.toArray(new Transaction[possibleTxs.length]);
+    	Transaction[] acceptedTxns= validTxns; //start default
+    	
+    	return acceptedTxns;
+    }
+    
+    public HashMap computeFeesForValidTransactionsFrom(Transaction[] possibleTxs) {
+    	HashMap map= new HashMap();
     	for (int i=0; i < possibleTxs.length; i++) {
-    		Transaction txToCheck= possibleTxs[i];
-    		double fee= getFeeFor(txToCheck);
-    		if (isValidTx(txToCheck)) {
-    			acceptedTxs.addElement(txToCheck);
-    			
-    			//updating the current UTXO pool as appropriate.
-    			//There are 3 outputs all to one publickey
-    			ArrayList outputs= txToCheck.getOutputs();
-    			for (int j=0; j < outputs.size(); j++) {
-    				Transaction.Output o= (Transaction.Output) outputs.get(j);
-    				UTXO utxo = new UTXO(txToCheck.getHash(),j);
-    				_utxoPool.addUTXO(utxo, o);
-    				System.out.println("MaxFeeTxHandler: addUTXO Value=" + o.value + " at index=" + j + " to txn=" + txToCheck.hashCode());
-    			}
-    			
-    	    	//TBD: We've added the new unclaimed txns (UTXOs) - we should remove the earlier ones!
-    			//_utxoPool.removeUTXO(utxo);
-    			ArrayList inputs= txToCheck.getInputs();
-    			for (int j=0; j < inputs.size(); j++) {
-    				Transaction.Input ii= (Transaction.Input) inputs.get(j);
-    				UTXO ut= new UTXO(ii.prevTxHash, ii.outputIndex);
-    				Transaction.Output txOut= _utxoPool.getTxOutput(ut);
-    				_utxoPool.removeUTXO(ut);
-    				System.out.println("MaxFeeTxHandler: removedUTXO Value=" + txOut.value + " at index=" + ii.outputIndex + " from txn=" + txToCheck.hashCode());
-    			}
-    			
-    		}
+    		Transaction tx= possibleTxs[i];
+    		if (!isValidTx(tx)) continue;
+    		
+    		double fee= getFeeFor(tx);
+    		map.put(tx, fee);
+    		
+    		//Doing this after the fee else the input utxo will get deleted!
+    		updateUtxosFor(tx); //valid txn - update utxo this right here
     	}
     	
-
+    	return map;
+    }
     	
-    	Transaction[] acceptedTxsArray= new Transaction[acceptedTxs.size()];
-    	Transaction[] ret= acceptedTxs.toArray(acceptedTxsArray);
-    	return ret;
+    	
+    public boolean updateUtxosFor(Transaction tx) {
+    	ArrayList outputs= tx.getOutputs();
+		for (int j=0; j < outputs.size(); j++) {
+			Transaction.Output o= (Transaction.Output) outputs.get(j);
+			UTXO utxo = new UTXO(tx.getHash(),j);
+			_utxoPool.addUTXO(utxo, o);
+			System.out.println("MaxFeeTxHandler: addUTXO Value=" + o.value + " at index=" + j + " to txn=" + tx.hashCode());
+		}
+		
+		ArrayList inputs= tx.getInputs();
+		for (int j=0; j < inputs.size(); j++) {
+			Transaction.Input ii= (Transaction.Input) inputs.get(j);
+			UTXO ut= new UTXO(ii.prevTxHash, ii.outputIndex);
+			Transaction.Output txOut= _utxoPool.getTxOutput(ut);
+			_utxoPool.removeUTXO(ut);
+			System.out.println("MaxFeeTxHandler: removedUTXO Value=" + txOut.value + " at index=" + ii.outputIndex + " from txn=" + tx.hashCode());
+		}
+		
+		return true;
     }
     
     public double getFeeFor(Transaction tx) {

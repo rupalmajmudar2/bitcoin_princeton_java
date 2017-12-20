@@ -73,10 +73,12 @@ public class Main {
          */
         // Remember that the utxoPool contains a single unspent Transaction.Output which is
         // the coin from Scrooge.
-        TxHandler txHandler = new TxHandler(utxoPool);
+        //TxHandler txHandler = new TxHandler(utxoPool);
+        MaxFeeTxHandler txHandler = new MaxFeeTxHandler(utxoPool);
         System.out.println("txHandler.isValidTx(tx2) returns: " + txHandler.isValidTx(tx2));
+        Transaction[] acceptedTxns= txHandler.handleTxs(new Transaction[]{tx2});
         System.out.println("txHandler.handleTxs(new Transaction[]{tx2}) returns: " +
-            txHandler.handleTxs(new Transaction[]{tx2}).length + " transaction(s)");
+        		acceptedTxns.length + " transaction(s)");
     }
 
 
