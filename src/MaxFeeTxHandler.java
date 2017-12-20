@@ -148,6 +148,7 @@ public class MaxFeeTxHandler {
     	Vector<Transaction> acceptedTxs= new Vector<Transaction>();
     	for (int i=0; i < possibleTxs.length; i++) {
     		Transaction txToCheck= possibleTxs[i];
+    		double fee= getFeeFor(txToCheck);
     		if (isValidTx(txToCheck)) {
     			acceptedTxs.addElement(txToCheck);
     			
@@ -180,6 +181,41 @@ public class MaxFeeTxHandler {
     	Transaction[] acceptedTxsArray= new Transaction[acceptedTxs.size()];
     	Transaction[] ret= acceptedTxs.toArray(acceptedTxsArray);
     	return ret;
+    }
+    
+    public double getFeeFor(Transaction tx) {
+    	if (tx == null) return 0.0;
+    	
+    	ArrayList<Transaction.Input> inputs= tx.getInputs();
+    	ArrayList<Transaction.Output> outputs= tx.getOutputs();
+    	
+      	double totalInputValue= 0.0;
+       	for (int i = 0; i < inputs.size(); i++) {
+    		Transaction.Input in = (Transaction.Input) inputs.get(i);
+    		if (in == null) continue;
+    		UTXO ut= new UTXO(in.prevTxHash, in.outputIndex);
+    		Transaction.Output txOut= _utxoPool.getTxOutput(ut);
+    		if (txOut == null) continue;
+    		System.out.println("Txn#" + tx.hashCode() + " Index=" + in.outputIndex + " TxnValue=" + txOut.value);
+    		totalInputValue= totalInputValue + txOut.value;
+       	}
+       	System.out.println("Total Input Value=" + totalInputValue);		
+    				
+    	double totalOutputValue= 0.0;
+       	for (int i = 0; i < outputs.size(); i++) {
+    		Transaction.Output out = (Transaction.Output) outputs.get(i);
+    		if (out == null) continue;
+    		int outAddr= out.address.hashCode();
+    		double outVal= out.value;
+    		System.out.println("Txn#" + tx.hashCode() + " Addr=" + outAddr + " TxnValue=" + outVal);
+    		totalOutputValue= totalOutputValue + outVal;
+       	}
+       	System.out.println("Total Output Value=" + totalOutputValue);	
+       	
+       	double fee= totalOutputValue - totalInputValue;
+       	System.out.println("#getFeeFor: Fee for Txn#" + tx.hashCode() + " = " + fee);
+       	
+    	return fee;
     }
 
 }
