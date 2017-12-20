@@ -172,8 +172,8 @@ public class TxHandler {
     				Transaction.Input ii= (Transaction.Input) inputs.get(j);
     				UTXO ut= new UTXO(ii.prevTxHash, ii.outputIndex);
     				Transaction.Output txOut= _utxoPool.getTxOutput(ut);
-    				//_utxoPool.removeUTXO(ut);
-    				//System.out.println("TxHandler: removedUTXO Value=" + txOut.value + " at index=" + ii.outputIndex + " from txn=" + txToCheck.hashCode());
+    				_utxoPool.removeUTXO(ut);
+    				System.out.println("TxHandler: removedUTXO Value=" + txOut.value + " at index=" + ii.outputIndex + " from txn=" + txToCheck.hashCode());
     			}
     			
     		}
