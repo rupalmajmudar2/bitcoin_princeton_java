@@ -84,17 +84,23 @@ public class TxHandler {
     	 * "It might be easiest to read UTXO as "unspent coin". And the UTXOpool is a list of all the unspent coins.
 			You should be checking that the TX isn't trying to spend the same coin twice."
     	 */
-    	Vector inputValues= new Vector();
+    	/**
+    	 * Rupal: Basically - that multiple inputs "map to the same UTXO" 
+    	 * [we've already checked in Step1 that that UTXO exists in the pool]
+    	 * So multiple inputs mapping to the same UTXO means double-spend!!
+    	 */
+    	Vector utxos= new Vector();
        	for (int i = 0; i < inputs.size(); i++) {
     		Transaction.Input in = (Transaction.Input) inputs.get(i);
     		UTXO ut= new UTXO(in.prevTxHash, in.outputIndex);
+    		int utxoId= ut.hashCode();
     		Transaction.Output txOut= _utxoPool.getTxOutput(ut);
-    		System.out.println("Step#3: Txn#" + tx.hashCode() + " Index=" + in.outputIndex + " TxnValue=" + txOut.value);
-    		if (inputValues.contains(txOut.value)) {
-    			System.out.println("Step#3: Found duplicate value= " + txOut.value + " - Error! ");
+    		System.out.println("Step#3: Txn#" + tx.hashCode() + " Index=" + in.outputIndex + " TxnValue=" + txOut.value + " UTXO=" + utxoId);
+    		if (utxos.contains(utxoId)) {
+    			System.out.println("Step#3: Found duplicate UTXO=" + utxoId + " value="+ txOut.value + " - Error! ");
     			return false;
     		}
-    		inputValues.add(txOut.value);
+    		utxos.add(utxoId);
        	}
     		
     	//(4) Values
