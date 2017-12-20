@@ -132,16 +132,6 @@ public class TxHandler {
        	
     	return true;
     }
-    	
-    	//courtesy https://stackoverflow.com/questions/13900585/trying-to-find-all-occurrences-of-an-object-in-arraylist-in-java
-    	static ArrayList<Integer> indexOfAll(Object obj, ArrayList list){
-    	    ArrayList<Integer> indexList = new ArrayList<Integer>();
-    	    for (int i = 0; i < list.size(); i++)
-    	        if(obj.equals(list.get(i))) {
-    	            indexList.add(i);
-    	        }
-    	    return indexList;
-    	}
     
     /**
      * Handles each epoch by receiving an unordered array of proposed transactions, checking each
